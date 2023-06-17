@@ -9,16 +9,51 @@ import {
   ScrollView,
   TouchableOpacity,
   ImageBackground,
+  ActivityIndicator,
   VirtualizedList,
   Button,
 } from 'react-native';
 import React from 'react';
+import {useRef, useEffect, useCallback, useState} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import ImagePicker from 'react-native-image-picker';
 import {launchCamera} from 'react-native-image-picker';
+import {Camera, useCameraDevices} from 'react-native-vision-camera';
+import {Permissions} from 'react-native-permissions';
 
 export default function Home() {
+  const devices = useCameraDevices();
+  const device = camView === 'back' ? devices.back : devices.front;
+
+  const cameraRef = useRef(Camera);
+  const [isCameraActive, setCameraActive] = useState(false);
+  // const camera = useRef < Camera > null;
+  const [image, setImage] = useState('');
+  const [camView, setCamView] = useState('back');
+
+  const handleFlipCamera = () => {
+    console.log(camView, 'device');
+    // setCamView(prevView => (prevView === 'back' ? 'front' : 'back'));
+    camView === 'back' ? setCamView('front') : setCamView('back');
+  };
+
+  useEffect(() => {
+    checkPermission();
+    // requestCameraPermission();
+  }, [checkPermission, devices]);
+
+  const checkPermission = useCallback(async () => {
+    const newCameraPermission = await Camera.requestCameraPermission();
+    // const newMicrophonePermission = await Camera.requestMicrophonePermission();
+    // console.log(newCameraPermission);
+    if (newCameraPermission == 'denied') {
+      await Linking.openSettings();
+    }
+  }, [devices]);
+
+  if (device == null) return <ActivityIndicator />;
+
   const DATA = [
     {
       id: 'bd7acbea-c1b1-46cd2-aed5-3ad53abb28ba',
@@ -86,28 +121,27 @@ export default function Home() {
     </View>
   );
 
-  const camera = () => {
-    const options = {
-      quality: 1,
-      mediaType: 'photo',
-      saveToPhotos: true,
-    };
-    launchCamera(options, response => {
-      if (response.didCancel) {
-        console.log('Batal meluncurkan kamera');
-      } else if (response.error) {
-        console.log('Error: ', response.error);
-      } else {
-        // Mendapatkan URI gambar yang diambil
-        const uri = response.uri;
-        const data = response.assets;
-        console.log(data);
-        console.log('URI gambar: ', uri);
-        // Lakukan sesuatu dengan gambar yang diambil
+  const takePhoto = async () => {
+    try {
+      if (cameraRef.current == null) {
+        throw new Error('Camera is Null');
       }
-    });
+
+      const photo = await cameraRef.current.takePhoto({
+        qualityPriorition: 'quality',
+        // flash: `${torch}`,
+      });
+      console.log(photo, 'photooo');
+      console.log(photo.path.split('/cache/')[1], 'photo');
+      setImage(photo.path);
+      console.log(image, 'image');
+      setCameraActive(false);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
+  //! FUNGSI FLIP MASIH BELUM BERFUNGSI
   return (
     <ScrollView style={styles.container}>
       <StatusBar animated={true} backgroundColor="#24CE9E" />
@@ -301,9 +335,82 @@ export default function Home() {
           />
         </View>
       </View>
-      <View>
-        <Button title="Kamera tidak muncul" onPress={camera} />
-      </View>
+      {image && (
+        <Image
+          source={{uri: 'file://' + image}}
+          style={{width: 200, height: 200}}
+        />
+      )}
+      {!isCameraActive && (
+        <TouchableOpacity
+          style={{
+            backgroundColor: 'yellow',
+            padding: 10,
+            alignItems: 'center',
+          }}
+          onPress={() => setCameraActive(true)}>
+          <Text>Activate Camera</Text>
+        </TouchableOpacity>
+      )}
+      {isCameraActive && (
+        <Camera
+          style={StyleSheet.absoluteFill}
+          device={device}
+          isActive={true}
+          photo={true}
+          ref={cameraRef}
+        />
+      )}
+      {isCameraActive && (
+        <>
+          <View
+            style={{
+              flexDirection: 'row',
+              // width: '100%',
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
+              marginBottom: 50,
+            }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'yellow',
+                padding: 10,
+                alignItems: 'center',
+                borderRadius: 10,
+              }}
+              onPress={() => {
+                setCameraActive(false);
+              }}>
+              <Text>Kembali</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'yellow',
+                padding: 10,
+                alignItems: 'center',
+                borderRadius: 10,
+              }}
+              onPress={takePhoto}>
+              <Text>Take Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'yellow',
+                padding: 10,
+                alignItems: 'center',
+                borderRadius: 10,
+              }}
+              onPress={() => {
+                console.log(camView, 'Test');
+                camView === 'back' ? setCamView('front') : setCamView('back');
+              }}>
+              <Text>Flip</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 }
