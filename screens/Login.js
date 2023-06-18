@@ -9,28 +9,66 @@ import {
 } from 'react-native';
 import React from 'react';
 import {useState} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     // Kode untuk melakukan proses login, misalnya dengan mengirim data ke server
-    console.log('Email:', email);
+    console.log('name:', name);
     console.log('Password:', password);
+    const {data} = await axios.post(
+      'http://10.0.2.2:3000/login', // harus pake ini gantinya localhost biar konek ke server
+      {
+        Name: name,
+        Password: password,
+      },
+      // {
+      //   headers: {
+      //     'Content-Type': 'application/x-www-form-urlencoded',
+      //   },
+      // },
+    );
+    console.log(data, 'data');
   };
+  async function getUser(name, password) {
+    console.log('masuk lofin');
+    try {
+      const response = await axios.post(
+        // 'http://10.0.2.2:3000/buridoapps',
+        'http://10.0.2.2:3000/login',
+
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          data: {
+            Name: name,
+            Password: password,
+          },
+        },
+      );
+      console.log(response, 'responsee');
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   return (
     <View style={styles.container}>
       <Image
         // style={{ marginTop: 10 }}
         source={require('../assets/verification.gif')}
       />
-      <Text style={{color: 'black', fontWeight: 700}}>Email</Text>
+      <Text style={{color: 'black', fontWeight: 700}}>name</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={text => setEmail(text)}
+        placeholder="name"
+        value={name}
+        onChangeText={text => setName(text)}
         autoCapitalize="none"
       />
       <Text style={{color: 'black', fontWeight: 700}}>Password</Text>
@@ -41,7 +79,7 @@ export default function Login() {
         onChangeText={text => setPassword(text)}
         secureTextEntry
       />
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity onPress={handleLogin} style={styles.button}>
         <Text style={{color: 'black', fontWeight: 700}}>Login</Text>
       </TouchableOpacity>
     </View>
