@@ -41,3 +41,7 @@ Berikut adalah langkah-langkah untuk menginstal dan menjalankan aplikasi Buridos
    ```bash
    <!-- git clone https://github.com/nama_pengembang/buridosaleh-apps.git -->
    ```
+
+## kekurangan
+
+- belum terhubung ke api
