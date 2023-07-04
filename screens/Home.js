@@ -418,11 +418,6 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // paddingHorizontal: 10,
-    // justifyContent: "center",
-    // alignItems: "center",
-    // padding: 10,
-    // backgroundColor: "#F5FCFF",
   },
   warung: {
     fontSize: 18,
